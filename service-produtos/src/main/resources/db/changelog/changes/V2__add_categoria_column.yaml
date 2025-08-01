@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3
+      author: israel_oliveira
+      changes:
+        - addColumn:
+            tableName: produtos
+            columns:
+              - column:
+                  name: categoria
+                  type: VARCHAR(50)
+                  defaultValue: "GERAL"

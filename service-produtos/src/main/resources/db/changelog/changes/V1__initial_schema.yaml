@@ -1,0 +1,46 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: israel_oliveira
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS produto;
+            comment: Cria o schema produto se não existir
+        - rollback:
+            sql: DROP SCHEMA IF EXISTS produto CASCADE;
+            comment: Rollback remove o schema e todos os objetos dentro dele
+
+  - changeSet:
+      id: 2
+      author: israel_oliveira
+      changes:
+        - createTable:
+            tableName: produtos
+            #schemaName: produto
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: nome
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: descricao
+                  type: VARCHAR(500)
+              - column:
+                  name: preco
+                  type: NUMERIC(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: quantidade_estoque
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+            comment: Cria tabela de produtos no schema produto

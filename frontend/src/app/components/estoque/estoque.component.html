@@ -1,0 +1,29 @@
+<mat-card>
+  <h2>Consulta de Estoque</h2>
+
+  <!-- Campo de busca -->
+  <form (ngSubmit)="consultarProduto()">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>ID do Produto</mat-label>
+      <input matInput type="number" [(ngModel)]="idBusca" name="idBusca" required>
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" type="submit">Consultar</button>
+  </form>
+
+  <!-- Resultado -->
+  <div *ngIf="produtoEncontrado" class="resultado">
+    <h3>{{ produtoEncontrado.nome }}</h3>
+    <p><strong>Descrição:</strong> {{ produtoEncontrado.descricao }}</p>
+    <p><strong>Preço:</strong> R$ {{ produtoEncontrado.preco }}</p>
+    <p><strong>Estoque:</strong> {{ produtoEncontrado.quantidadeEmEstoque }}</p>
+
+    <mat-chip [color]="estoqueBaixo ? 'warn' : 'primary'" selected>
+      {{ estoqueBaixo ? 'Estoque Baixo' : 'Estoque OK' }}
+    </mat-chip>
+  </div>
+
+  <div *ngIf="produtoNaoEncontrado" class="resultado">
+    <p style="color: red;">Produto não encontrado</p>
+  </div>
+</mat-card>

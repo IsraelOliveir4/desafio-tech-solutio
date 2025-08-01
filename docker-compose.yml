@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  db-produto:
+    image: postgres:13
+    container_name: db-produto
+    environment:
+      POSTGRES_DB: produto_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST_AUTH_METHOD: trust  
+    ports:
+      - "5432:5432"
+    volumes:
+      - produto-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d produto_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  produto-service:
+    build: ./service-produtos
+    container_name: produto-service
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db-produto:5432/produto_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_LIQUIBASE_ENABLED: "true"
+      SPRING_LIQUIBASE_CHANGE-LOG: "classpath:/db/changelog/db.changelog-master.yaml"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: "validate"
+    depends_on:
+      db-produto:
+        condition: service_healthy
+    volumes:
+      - ./service-produtos/src/main/resources:/app/resources:ro
+
+  estoque-service:
+    build: ./service-estoque
+    container_name: estoque-service
+    ports:
+      - "8081:8081"
+    environment:
+      PRODUTO_SERVICE_URL: "http://produto-service:8080"
+      SPRING_PROFILES_ACTIVE: "docker"
+    depends_on:
+      - produto-service
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "4200:4200"
+    command: ["npm", "start"]  
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - produto-service
+
+volumes:
+  produto-data:

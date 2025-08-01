@@ -1,0 +1,9 @@
+.idea/
+.vscode/
+*.iml
+*.log
+.DS_Store
+*.class
+*.war
+node_modules/
+.env
