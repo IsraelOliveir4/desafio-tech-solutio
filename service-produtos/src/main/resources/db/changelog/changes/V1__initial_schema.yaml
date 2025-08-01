@@ -35,7 +35,7 @@ databaseChangeLog:
                   type: VARCHAR(500)
               - column:
                   name: preco
-                  type: NUMERIC(10,2)
+                  type: DOUBLE PRECISION
                   constraints:
                     nullable: false
               - column:
