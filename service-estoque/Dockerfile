@@ -1,14 +1,12 @@
-# Use a imagem oficial do OpenJDK como base
-FROM eclipse-temurin:17-jdk-jammy
-
-# Defina o diretório de trabalho dentro do container
+# Etapa 1: compila o projeto com Maven
+FROM maven:3.9.6-eclipse-temurin-17 AS builder
 WORKDIR /app
+COPY . .
+RUN mvn clean package -DskipTests
 
-# Copie o arquivo JAR da aplicação para dentro do container
-COPY target/*.jar app.jar
-
-# Expõe a porta que sua aplicação vai rodar (ajuste se necessário)
+# Etapa 2: roda o JAR gerado
+FROM eclipse-temurin:17-jdk-jammy
+WORKDIR /app
+COPY --from=builder /app/target/*.jar app.jar
 EXPOSE 8081
-
-# Comando para executar a aplicação
 ENTRYPOINT ["java", "-jar", "app.jar"]

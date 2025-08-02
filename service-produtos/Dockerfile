@@ -1,14 +1,25 @@
-# Use a imagem oficial do OpenJDK como base
-FROM eclipse-temurin:17-jdk-jammy
+# Etapa 1: compila o projeto com Maven
+FROM maven:3.9.6-eclipse-temurin-17 AS builder
 
-# Defina o diretório de trabalho dentro do container
+# Define o diretório de trabalho
 WORKDIR /app
 
-# Copie o arquivo JAR da aplicação para dentro do container
-COPY target/*.jar app.jar
+# Copia todos os arquivos do projeto para dentro do container
+COPY . .
 
-# Expõe a porta que sua aplicação vai rodar (ajuste se necessário)
+# Compila o projeto (sem rodar os testes)
+RUN mvn clean package -DskipTests
+
+# Etapa 2: usa uma imagem mais leve para rodar o JAR
+FROM eclipse-temurin:17-jdk-jammy
+
+WORKDIR /app
+
+# Copia o JAR gerado na etapa anterior
+COPY --from=builder /app/target/*.jar app.jar
+
+# Expõe a porta que o Spring Boot usa
 EXPOSE 8080
 
-# Comando para executar a aplicação
+# Comando para rodar o app
 ENTRYPOINT ["java", "-jar", "app.jar"]
