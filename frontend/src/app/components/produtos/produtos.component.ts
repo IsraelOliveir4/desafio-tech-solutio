@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,8 +8,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule } from '@angular/material/dialog';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Produto } from '../../models/produto.model';
+import { HttpClientModule } from '@angular/common/http';
+
+import { Produto } from '../../models/produto.model'; // Importa do lugar certo
+import { ProdutoService } from '../../services/produto.service';
 
 @Component({
   selector: 'app-produtos',
@@ -18,6 +20,7 @@ import { Produto } from '../../models/produto.model';
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    HttpClientModule,
     MatTableModule,
     MatButtonModule,
     MatIconModule,
@@ -29,18 +32,17 @@ import { Produto } from '../../models/produto.model';
   templateUrl: './produtos.component.html',
   styleUrls: ['./produtos.component.scss']
 })
-export class ProdutosComponent {
-  produtos: Produto[] = [
-    { id: 1, nome: 'Café', descricao: 'Café torrado e moído', preco: 12.5, quantidadeEmEstoque: 20 },
-    { id: 2, nome: 'Chá', descricao: 'Chá de camomila', preco: 8.0, quantidadeEmEstoque: 5 }
-  ];
-
-  displayedColumns: string[] = ['id', 'nome', 'descricao', 'preco', 'quantidade', 'acoes'];
+export class ProdutosComponent implements OnInit {
+  produtos: Produto[] = [];
+  displayedColumns: string[] = ['id', 'nome', 'descricao', 'preco', 'quantidadeEmEstoque', 'acoes'];
   form: FormGroup;
   editando = false;
   produtoSelecionadoId: number | null = null;
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private produtoService: ProdutoService
+  ) {
     this.form = this.fb.group({
       nome: ['', Validators.required],
       descricao: ['', Validators.required],
@@ -49,24 +51,39 @@ export class ProdutosComponent {
     });
   }
 
+  ngOnInit() {
+    this.carregarProdutos();
+  }
+
+  carregarProdutos() {
+    this.produtoService.listarProdutos().subscribe({
+      next: (produtos) => this.produtos = produtos,
+      error: (err) => console.error('Erro ao carregar produtos:', err)
+    });
+  }
+
   onSubmit() {
     if (this.form.invalid) return;
 
-    const produto = this.form.value;
+    const produto = this.form.value as Produto;
 
     if (this.editando && this.produtoSelecionadoId !== null) {
-      const index = this.produtos.findIndex(p => p.id === this.produtoSelecionadoId);
-      this.produtos[index] = { id: this.produtoSelecionadoId, ...produto };
+      this.produtoService.atualizarProduto(this.produtoSelecionadoId, produto).subscribe({
+        next: () => {
+          this.carregarProdutos();
+          this.cancelarEdicao();
+        },
+        error: (err) => console.error('Erro ao atualizar produto:', err)
+      });
     } else {
-      const novoId = Math.max(...this.produtos.map(p => p.id), 0) + 1;
-      const novoProduto: Produto = {
-        id: novoId,
-        ...produto
-      };
-      this.produtos.push(novoProduto);
+      this.produtoService.criarProduto(produto).subscribe({
+        next: () => {
+          this.carregarProdutos();
+          this.cancelarEdicao();
+        },
+        error: (err) => console.error('Erro ao adicionar produto:', err)
+      });
     }
-
-    this.cancelarEdicao();
   }
 
   editar(produto: Produto) {
@@ -76,8 +93,13 @@ export class ProdutosComponent {
   }
 
   excluir(id: number) {
-    this.produtos = this.produtos.filter(p => p.id !== id);
-    this.cancelarEdicao();
+    this.produtoService.deletarProduto(id).subscribe({
+      next: () => {
+        this.carregarProdutos();
+        this.cancelarEdicao();
+      },
+      error: (err) => console.error('Erro ao excluir produto:', err)
+    });
   }
 
   cancelarEdicao() {

@@ -6,6 +6,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
+import { HttpClientModule } from '@angular/common/http';
+
+import { ProdutoService } from '../../services/produto.service';
+import { Produto } from '../../models/produto.model';
 
 @Component({
   selector: 'app-estoque',
@@ -17,44 +21,33 @@ import { MatChipsModule } from '@angular/material/chips';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatChipsModule
+    MatChipsModule,
+    HttpClientModule
   ],
   templateUrl: './estoque.component.html',
   styleUrls: ['./estoque.component.scss']
 })
 export class EstoqueComponent {
-  // ... outras propriedades
-    idBusca: number = 0;
-    produtoEncontrado: any = null;
-    produtoNaoEncontrado: boolean = false; // Adicione esta linha
-    estoqueBaixo: boolean = false;
-  
+  idBusca: number = 0;
+  produtoEncontrado: Produto | null = null;
+  produtoNaoEncontrado: boolean = false;
+  estoqueBaixo: boolean = false;
+
+  constructor(private produtoService: ProdutoService) {}
+
   consultarProduto() {
-    // 1. Resetar estados anteriores
     this.produtoEncontrado = null;
     this.produtoNaoEncontrado = false;
     this.estoqueBaixo = false;
 
-    // 2. Simulação de busca - substitua por sua lógica real
-    const produtoBuscado = this.buscarProdutoNoServico(this.idBusca); 
-
-    // 3. Atualizar estados conforme resultado
-    if (produtoBuscado) {
-      this.produtoEncontrado = produtoBuscado;
-      this.estoqueBaixo = produtoBuscado.quantidadeEmEstoque < 5; // Exemplo: estoque baixo se < 5 unidades
-    } else {
-      this.produtoNaoEncontrado = true;
-    }
-  }
-
-  // Método de exemplo (substitua pelo seu serviço real)
-  private buscarProdutoNoServico(id: number): any {
-    // Mock de dados - na prática, você faria uma chamada HTTP aqui
-    const mockProdutos = [
-      { id: 1, nome: 'Café', descricao: 'Café premium', preco: 12.50, quantidadeEmEstoque: 10 },
-      { id: 2, nome: 'Chá', descricao: 'Chá verde', preco: 8.00, quantidadeEmEstoque: 3 }
-    ];
-    
-    return mockProdutos.find(p => p.id === id);
+    this.produtoService.buscarPorId(this.idBusca).subscribe({
+      next: (produto: Produto) => {
+        this.produtoEncontrado = produto;
+        this.estoqueBaixo = produto.quantidadeEmEstoque < 10;
+      },
+      error: () => {
+        this.produtoNaoEncontrado = true;
+      }
+    });
   }
 }
