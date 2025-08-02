@@ -10,7 +10,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule } from '@angular/material/dialog';
 import { HttpClientModule } from '@angular/common/http';
 
-import { Produto } from '../../models/produto.model'; // Importa do lugar certo
+import { Produto } from '../../models/produto.model';
 import { ProdutoService } from '../../services/produto.service';
 
 @Component({
